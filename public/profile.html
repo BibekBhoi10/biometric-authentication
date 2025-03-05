@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to Your Profile</h1>
+        <button id="register-passkey-btn" class="btn">Register Passkey</button>
+    </div>
+
+    <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js"></script>
+
+    <script>
+        const registerPasskeyBtn = document.getElementById('register-passkey-btn');
+
+        registerPasskeyBtn.addEventListener('click', async (e) => {
+            const url = new URL(window.location)
+            // from here we can get the userid of the user 
+            const userId = url.searchParams.get('userId')
+
+            const response = await fetch('/register-challenge', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ userId })
+            })
+            
+            // from the above statement we get the result of the challenge which is stored bellow
+            const challengeResult = await response.json()
+            const { options } = challengeResult // Server side challenge
+
+            const authenticationResult = await SimpleWebAuthnBrowser.startRegistration({...options, })
+            console.log(authenticationResult)
+
+            await fetch('/register-verify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ userId, cred: authenticationResult })
+            })
+        })
+    </script>
+</body>
+</html>
